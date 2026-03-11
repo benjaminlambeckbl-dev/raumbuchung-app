@@ -5,7 +5,8 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'data', 'db.json');
+const VOLUME_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(__dirname, 'data');
+const DATA_FILE = process.env.DATA_FILE || path.join(VOLUME_PATH, 'db.json');
 
 // ── Datenspeicher ────────────────────────────────────────────────────────────
 

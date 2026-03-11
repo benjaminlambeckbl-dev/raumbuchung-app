@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raumbuchung</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #eef2f7; color: #1a2332; }
+header { background: #1e40af; color: white; padding: 0 0 0 20px; display: flex; align-items: stretch; gap: 0; }
+header h1 { font-size: 1.1rem; font-weight: 600; padding: 14px 20px 14px 0; letter-spacing: -0.3px; }
+.tabs { display: flex; margin-left: auto; }
+.tab-btn { background: transparent; border: none; color: rgba(255,255,255,0.7); padding: 0 22px; cursor: pointer; font-size: 0.88rem; font-weight: 500; border-bottom: 3px solid transparent; transition: all 0.15s; }
+.tab-btn:hover { color: white; background: rgba(255,255,255,0.08); }
+.tab-btn.active { color: white; border-bottom: 3px solid white; background: rgba(255,255,255,0.12); }
+.sync-dot { font-size: 0.72rem; color: rgba(255,255,255,0.6); padding: 0 16px; display: flex; align-items: center; gap: 5px; }
+.sync-dot::before { content:''; width:6px; height:6px; border-radius:50%; background:#4ade80; display:inline-block; }
+.tab-content { display: none; padding: 20px; }
+.tab-content.active { display: block; }
+.nav-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.nav-btn { padding: 7px 16px; border: 1px solid #c7d2e0; border-radius: 6px; cursor: pointer; background: white; font-size: 0.88rem; color: #374151; font-weight: 500; }
+.nav-btn:hover { background: #f1f5f9; border-color: #94a3b8; }
+.nav-label { font-weight: 600; font-size: 1rem; color: #1e40af; }
+.booking-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04); }
+.booking-table th { background: #1e40af; color: white; padding: 10px 8px; text-align: center; font-size: 0.82rem; font-weight: 500; }
+.booking-table td { padding: 0; border: 1px solid #e8edf3; vertical-align: top; }
+.booking-table td.time-col { font-weight: 600; background: #f8fafc; width: 58px; text-align: center; font-size: 0.82rem; color: #64748b; padding: 10px 4px; vertical-align: middle; }
+.cell-free { background: #f0fdf4; cursor: pointer; text-align: center; font-size: 0.8rem; color: #16a34a; padding: 10px 4px; }
+.cell-free:hover { background: #dcfce7; }
+.cell-booked { background: #fff; }
+.bk-entry { padding: 6px 28px 6px 8px; position: relative; border-bottom: 1px solid #f1f5f9; }
+.bk-entry:last-child { border-bottom: none; }
+.bk-room { font-size: 0.7rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.bk-name { font-size: 0.82rem; font-weight: 600; color: #1a2332; }
+.bk-note { font-size: 0.75rem; color: #94a3b8; }
+.bk-cancel { position: absolute; top: 6px; right: 6px; background: #fee2e2; color: #dc2626; border: none; border-radius: 4px; width: 18px; height: 18px; cursor: pointer; font-size: 9px; line-height: 18px; text-align: center; padding: 0; }
+.bk-cancel:hover { background: #fecaca; }
+.free-chip { display: block; padding: 4px 8px; font-size: 0.72rem; color: #16a34a; background: #f0fdf4; cursor: pointer; border-bottom: 1px solid #e8edf3; }
+.free-chip:hover { background: #dcfce7; }
+.free-chip:last-child { border-bottom: none; }
+.modal-bg { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.45); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+.modal-bg.open { display: flex; }
+.modal { background: white; border-radius: 14px; padding: 28px; width: 400px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+.modal h2 { font-size: 1.1rem; margin-bottom: 6px; color: #1e40af; }
+.modal-info { font-size: 0.85rem; color: #64748b; margin-bottom: 20px; }
+.form-label { display: block; font-size: 0.82rem; font-weight: 600; color: #374151; margin-bottom: 5px; }
+.form-input { width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 7px; margin-bottom: 14px; font-size: 0.9rem; transition: border-color 0.15s; }
+.form-input:focus { outline: none; border-color: #1e40af; }
+.modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+.btn { padding: 9px 22px; border-radius: 7px; cursor: pointer; border: none; font-size: 0.88rem; font-weight: 500; }
+.btn-primary { background: #1e40af; color: white; }
+.btn-primary:hover { background: #1d3a9e; }
+.btn-ghost { background: #f1f5f9; color: #374151; }
+.btn-ghost:hover { background: #e2e8f0; }
+.admin-section { background: white; border-radius: 10px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.admin-section h2 { font-size: 0.95rem; font-weight: 600; color: #1e40af; margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
+.room-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.room-row input { flex: 1; padding: 7px 10px; border: 1.5px solid #e2e8f0; border-radius: 6px; font-size: 0.88rem; }
+.room-row button { padding: 7px 12px; background: #fff1f2; border: 1px solid #fecdd3; color: #e11d48; border-radius: 6px; cursor: pointer; font-size: 0.82rem; }
+.add-room-btn { padding: 7px 14px; background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; border-radius: 6px; cursor: pointer; margin-top: 6px; font-size: 0.82rem; }
+.save-btn { padding: 9px 22px; background: #1e40af; color: white; border: none; border-radius: 7px; cursor: pointer; font-size: 0.88rem; font-weight: 500; }
+.time-row { display: flex; gap: 20px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+.time-row label { font-size: 0.85rem; font-weight: 600; color: #374151; }
+.time-row select { padding: 7px 10px; border: 1.5px solid #e2e8f0; border-radius: 6px; margin-left: 6px; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+.admin-table th { background: #f8fafc; padding: 9px 10px; text-align: left; border-bottom: 2px solid #e8edf3; font-weight: 600; color: #374151; }
+.admin-table td { padding: 9px 10px; border-bottom: 1px solid #f1f5f9; }
+.admin-filter { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; align-items: flex-end; }
+.admin-filter label { font-size: 0.82rem; font-weight: 600; color: #374151; display: flex; flex-direction: column; gap: 4px; }
+.admin-filter input, .admin-filter select { padding: 7px 10px; border: 1.5px solid #e2e8f0; border-radius: 6px; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Raumbuchung</h1>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('day')">Tagesansicht</button>
+    <button class="tab-btn" onclick="showTab('week')">Wochenvorschau</button>
+    <button class="tab-btn" onclick="showTab('admin')">Admin</button>
+  </div>
+  <div class="sync-dot" id="rbadge">Sync</div>
+</header>
+
+<div id="tab-day" class="tab-content active" style="display:block">
+  <div class="nav-bar">
+    <button class="nav-btn" onclick="changeDay(-1)">&larr;</button>
+    <span id="day-label" class="nav-label"></span>
+    <button class="nav-btn" onclick="changeDay(1)">&rarr;</button>
+  </div>
+  <div id="day-table"></div>
+</div>
+
+<div id="tab-week" class="tab-content">
+  <div class="nav-bar">
+    <button class="nav-btn" onclick="changeWeek(-1)">&larr; Vorwoche</button>
+    <span id="week-label" class="nav-label"></span>
+    <button class="nav-btn" onclick="changeWeek(1)">N&auml;chste &rarr;</button>
+  </div>
+  <div id="week-table"></div>
+</div>
+
+<div id="tab-admin" class="tab-content">
+  <div class="admin-section">
+    <h2>R&auml;ume &amp; Zeiten</h2>
+    <div id="admin-rooms"></div>
+    <button class="add-room-btn" onclick="addRoom()">+ Raum hinzuf&uuml;gen</button>
+    <hr style="margin:16px 0;border:none;border-top:1px solid #f1f5f9;">
+    <div class="time-row">
+      <label>Startzeit: <select id="admin-start"></select></label>
+      <label>Endzeit: <select id="admin-end"></select></label>
+    </div>
+    <button class="save-btn" onclick="saveSettings()">Speichern</button>
+    <span id="save-msg" style="margin-left:10px;color:#16a34a;font-size:0.85rem;"></span>
+  </div>
+  <div class="admin-section">
+    <h2>Alle Buchungen</h2>
+    <div class="admin-filter">
+      <label>Von<input type="date" id="filter-from"></label>
+      <label>Bis<input type="date" id="filter-to"></label>
+      <label>Raum<select id="filter-room"><option value="">Alle</option></select></label>
+      <button class="save-btn" onclick="loadAdminBks()">Laden</button>
+    </div>
+    <div id="admin-bks-table" style="color:#94a3b8;font-size:0.88rem;">Bitte auf Laden klicken...</div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h2>Raum buchen</h2>
+    <p class="modal-info" id="modal-info"></p>
+    <label class="form-label" id="room-select-label" style="display:none">Raum *</label>
+    <select class="form-input" id="modal-room" style="display:none"></select>
+    <label class="form-label">Name *</label>
+    <input class="form-input" type="text" id="modal-name" placeholder="Ihr Name">
+    <label class="form-label">Notiz (optional)</label>
+    <textarea class="form-input" id="modal-note" rows="2" placeholder="Optionale Notiz"></textarea>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal()">Abbrechen</button>
+      <button class="btn btn-primary" onclick="doBook()">Buchen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var API = '';
+var ROOMS = ['Raum A', 'Raum B', 'Konferenzraum'];
+var HOURS = [8,9,10,11,12,13,14,15,16,17];
+var curDay = new Date(); curDay.setHours(0,0,0,0);
+var curWkMon = getMon(new Date());
+var pendingBook = null;
+var activeTab = 'day';
+var refreshTimer = null;
+var lastKnownTs = 0;
+var DAYS = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+var MONTHS = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+
+function pad(n) { return n<10?'0'+n:String(n); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmt(d) { return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function fmtLabel(d) { return DAYS[d.getDay()]+', '+d.getDate()+'. '+MONTHS[d.getMonth()]+' '+d.getFullYear(); }
+function addDays(d,n) { var r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function getMon(d) {
+  var day=d.getDay(), diff=(day===0)?-6:1-day;
+  var m=new Date(d); m.setDate(d.getDate()+diff); m.setHours(0,0,0,0); return m;
+}
+function kwNum(d) {
+  var dt=new Date(d); dt.setHours(0,0,0,0);
+  dt.setDate(dt.getDate()+4-(dt.getDay()||7));
+  var y1=new Date(dt.getFullYear(),0,1);
+  return Math.ceil(((dt-y1)/86400000+1)/7);
+}
+
+async function loadSettings() {
+  try {
+    var r=await fetch(API+'/rb-settings');
+    var s=await r.json();
+    ROOMS=s.rooms||ROOMS;
+    var sh=parseInt(s.startHour)||8, eh=parseInt(s.endHour)||17;
+    HOURS=[]; for(var h=sh;h<=eh;h++) HOURS.push(h);
+  } catch(e) { console.warn('Settings Fehler',e); }
+}
+
+function showTab(t) {
+  activeTab=t;
+  document.querySelectorAll('.tab-content').forEach(function(el){ el.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(el){ el.classList.remove('active'); });
+  document.getElementById('tab-'+t).classList.add('active');
+  document.querySelectorAll('.tab-btn')[{day:0,week:1,admin:2}[t]].classList.add('active');
+  if(t==='day') renderDay();
+  else if(t==='week') renderWk();
+  else if(t==='admin') { buildAdminRooms(); buildTimeSelects(); buildFilterRoom(); }
+}
+
+function changeDay(n) { curDay=addDays(curDay,n); renderDay(); }
+
+async function renderDay() {
+  var d=fmt(curDay);
+  document.getElementById('day-label').textContent=fmtLabel(curDay);
+  try {
+    var r=await fetch(API+'/rb-bookings?from='+d+'&to='+d);
+    var data=await r.json();
+    if(data.lastModified) lastKnownTs=data.lastModified;
+    var bks=data.bookings||[];
+    var html='<table class="booking-table"><thead><tr><th>Zeit</th>';
+    ROOMS.forEach(function(room){ html+='<th>'+esc(room)+'</th>'; });
+    html+='</tr></thead><tbody>';
+    HOURS.forEach(function(h) {
+      html+='<tr><td class="time-col">'+pad(h)+':00</td>';
+      ROOMS.forEach(function(room) {
+        var bk=bks.find(function(b){ return b.room===room&&b.hour===h; });
+        if(bk) {
+          html+='<td class="cell-booked"><div class="bk-entry">';
+          html+='<div class="bk-name">'+esc(bk.name)+'</div>';
+          if(bk.note) html+='<div class="bk-note">'+esc(bk.note)+'</div>';
+          html+='<button class="bk-cancel" onclick="doCancel(\''+bk.id+'\')" title="Stornieren">&#x2715;</button>';
+          html+='</div></td>';
+        } else {
+          html+='<td class="cell-free" onclick="openModal(\''+esc(room)+'\',\''+d+'\','+h+')">Frei</td>';
+        }
+      });
+      html+='</tr>';
+    });
+    html+='</tbody></table>';
+    document.getElementById('day-table').innerHTML=html;
+  } catch(e) { document.getElementById('day-table').innerHTML='<p style="color:red">Fehler: '+e.message+'</p>'; }
+}
+
+function changeWeek(n) { curWkMon=addDays(curWkMon,n*7); renderWk(); }
+
+async function renderWk() {
+  var mon=curWkMon;
+  document.getElementById('week-label').textContent='KW '+kwNum(mon)+' / '+mon.getFullYear();
+  var to=addDays(mon,6);
+  try {
+    var r=await fetch(API+'/rb-bookings?from='+fmt(mon)+'&to='+fmt(to));
+    var data=await r.json();
+    if(data.lastModified) lastKnownTs=data.lastModified;
+    var bks=data.bookings||[];
+    var days=[]; for(var i=0;i<7;i++) days.push(addDays(mon,i));
+    var html='<table class="booking-table"><thead><tr><th>Zeit</th>';
+    days.forEach(function(d){ html+='<th>'+DAYS[d.getDay()]+'<br><span style="font-weight:400;font-size:0.78rem;opacity:0.85;">'+d.getDate()+'.'+pad(d.getMonth()+1)+'.</span></th>'; });
+    html+='</tr></thead><tbody>';
+    HOURS.forEach(function(h) {
+      html+='<tr><td class="time-col">'+pad(h)+':00</td>';
+      days.forEach(function(d) {
+        var ds=fmt(d);
+        var dayBks=bks.filter(function(b){ return b.hour===h&&b.date===ds; });
+        if(dayBks.length>0) {
+          html+='<td class="cell-booked">';
+          dayBks.forEach(function(bk) {
+            html+='<div class="bk-entry">';
+            html+='<div class="bk-room">'+esc(bk.room)+'</div>';
+            html+='<div class="bk-name">'+esc(bk.name)+'</div>';
+            if(bk.note) html+='<div class="bk-note">'+esc(bk.note)+'</div>';
+            html+='<button class="bk-cancel" onclick="doCancel(\''+bk.id+'\')" title="Stornieren">&#x2715;</button>';
+            html+='</div>';
+          });
+          var bookedRooms=dayBks.map(function(b){ return b.room; });
+          var freeRooms=ROOMS.filter(function(rm){ return bookedRooms.indexOf(rm)<0; });
+          freeRooms.forEach(function(rm) {
+            html+='<div class="free-chip" onclick="openModal(\''+esc(rm)+'\',\''+ds+'\','+h+')">'+esc(rm)+': Frei</div>';
+          });
+          html+='</td>';
+        } else {
+          html+='<td class="cell-free" onclick="openWkModal(\''+ds+'\','+h+')">Alle frei</td>';
+        }
+      });
+      html+='</tr>';
+    });
+    html+='</tbody></table>';
+    document.getElementById('week-table').innerHTML=html;
+  } catch(e) { document.getElementById('week-table').innerHTML='<p style="color:red">Fehler: '+e.message+'</p>'; }
+}
+
+function openModal(room,date,hour) {
+  pendingBook={room:room,date:date,hour:hour};
+  document.getElementById('modal-info').textContent=room+' — '+date+' '+pad(hour)+':00 Uhr';
+  document.getElementById('room-select-label').style.display='none';
+  document.getElementById('modal-room').style.display='none';
+  document.getElementById('modal-name').value='';
+  document.getElementById('modal-note').value='';
+  document.getElementById('modal').classList.add('open');
+  setTimeout(function(){ document.getElementById('modal-name').focus(); },50);
+}
+
+function openWkModal(date,hour) {
+  pendingBook={room:null,date:date,hour:hour};
+  document.getElementById('modal-info').textContent=date+' '+pad(hour)+':00 Uhr';
+  var sel=document.getElementById('modal-room');
+  sel.innerHTML=ROOMS.map(function(r){ return '<option>'+esc(r)+'</option>'; }).join('');
+  document.getElementById('room-select-label').style.display='block';
+  sel.style.display='block';
+  document.getElementById('modal-name').value='';
+  document.getElementById('modal-note').value='';
+  document.getElementById('modal').classList.add('open');
+  setTimeout(function(){ document.getElementById('modal-name').focus(); },50);
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  pendingBook=null;
+}
+
+async function doBook() {
+  if(!pendingBook.room) pendingBook.room=document.getElementById('modal-room').value;
+  var name=document.getElementById('modal-name').value.trim();
+  if(!name) { alert('Bitte Namen eingeben!'); return; }
+  try {
+    var r=await fetch(API+'/rb-booking-create',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({room:pendingBook.room,date:pendingBook.date,hour:pendingBook.hour,name:name,note:document.getElementById('modal-note').value.trim()})
+    });
+    var res=await r.json();
+    if(res.error) { alert('Fehler: '+res.error); return; }
+    closeModal();
+    if(activeTab==='day') renderDay();
+    else if(activeTab==='week') renderWk();
+  } catch(e) { alert('Netzwerkfehler: '+e.message); }
+}
+
+async function doCancel(id) {
+  if(!confirm('Buchung wirklich stornieren?')) return;
+  try {
+    await fetch(API+'/rb-booking-cancel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})});
+    if(activeTab==='day') renderDay();
+    else if(activeTab==='week') renderWk();
+    else if(activeTab==='admin') loadAdminBks();
+  } catch(e) { alert('Fehler: '+e.message); }
+}
+
+function startAutoRefresh() {
+  if(refreshTimer) clearInterval(refreshTimer);
+  lastKnownTs=0;
+  refreshTimer=setInterval(async function() {
+    if(activeTab==='admin') return;
+    if(document.getElementById('modal').classList.contains('open')) return;
+    try {
+      var today=fmt(new Date());
+      var r=await fetch(API+'/rb-bookings?from='+today+'&to='+today);
+      var data=await r.json();
+      var ts=data.lastModified||0;
+      if(ts!==lastKnownTs) {
+        lastKnownTs=ts;
+        if(activeTab==='day') renderDay();
+        else if(activeTab==='week') renderWk();
+        var b=document.getElementById('rbadge');
+        if(b) { b.textContent='Aktualisiert!'; setTimeout(function(){ b.textContent='Sync'; },1500); }
+      }
+    } catch(e) { console.warn(e); }
+  },3000);
+}
+
+function buildAdminRooms() {
+  var html='';
+  ROOMS.forEach(function(r,i) {
+    html+='<div class="room-row"><input type="text" id="room-'+i+'" value="'+esc(r)+'"><button onclick="removeRoom('+i+')">Entfernen</button></div>';
+  });
+  document.getElementById('admin-rooms').innerHTML=html;
+}
+function addRoom() { ROOMS.push('Neuer Raum'); buildAdminRooms(); }
+function removeRoom(i) {
+  if(ROOMS.length<=1) { alert('Mindestens 1 Raum!'); return; }
+  ROOMS.splice(i,1); buildAdminRooms();
+}
+
+function buildTimeSelects() {
+  var ss=document.getElementById('admin-start'), es=document.getElementById('admin-end');
+  ss.innerHTML=''; es.innerHTML='';
+  for(var h=0;h<=23;h++) {
+    var s1=(HOURS[0]===h)?' selected':'', s2=(HOURS[HOURS.length-1]===h)?' selected':'';
+    ss.innerHTML+='<option value="'+h+'"'+s1+'>'+pad(h)+':00</option>';
+    es.innerHTML+='<option value="'+h+'"'+s2+'>'+pad(h)+':00</option>';
+  }
+}
+
+function buildFilterRoom() {
+  var sel=document.getElementById('filter-room');
+  sel.innerHTML='<option value="">Alle</option>';
+  ROOMS.forEach(function(r){ sel.innerHTML+='<option>'+esc(r)+'</option>'; });
+}
+
+async function saveSettings() {
+  var rooms=[];
+  ROOMS.forEach(function(_,i) {
+    var el=document.getElementById('room-'+i);
+    if(el) rooms.push(el.value.trim());
+  });
+  rooms=rooms.filter(function(r){ return r.length>0; });
+  var startH=parseInt(document.getElementById('admin-start').value);
+  var endH=parseInt(document.getElementById('admin-end').value);
+  if(endH<=startH) { alert('Endzeit muss nach Startzeit liegen!'); return; }
+  try {
+    var r=await fetch(API+'/rb-settings-save',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({rooms:rooms,startHour:startH,endHour:endH})
+    });
+    var res=await r.json();
+    if(res.error) { alert('Fehler: '+res.error); return; }
+    ROOMS=rooms;
+    var s=res.settings||{startHour:startH,endHour:endH};
+    HOURS=[]; for(var h=s.startHour;h<=s.endHour;h++) HOURS.push(h);
+    document.getElementById('save-msg').textContent='✓ Gespeichert!';
+    setTimeout(function(){ document.getElementById('save-msg').textContent=''; },3000);
+    buildFilterRoom();
+  } catch(e) { alert('Netzwerkfehler: '+e.message); }
+}
+
+async function loadAdminBks() {
+  var from=document.getElementById('filter-from').value;
+  var to=document.getElementById('filter-to').value;
+  var room=document.getElementById('filter-room').value;
+  if(!from||!to) { alert('Bitte Datumsbereich eingeben!'); return; }
+  try {
+    var r=await fetch(API+'/rb-bookings?from='+from+'&to='+to);
+    var data=await r.json();
+    var bks=data.bookings||[];
+    if(room) bks=bks.filter(function(b){ return b.room===room; });
+    bks.sort(function(a,b){ return (a.date+pad(a.hour)).localeCompare(b.date+pad(b.hour)); });
+    if(bks.length===0) { document.getElementById('admin-bks-table').innerHTML='<p style="color:#94a3b8;margin-top:8px;">Keine Buchungen gefunden.</p>'; return; }
+    var html='<table class="admin-table"><thead><tr><th>Datum</th><th>Raum</th><th>Zeit</th><th>Name</th><th>Notiz</th><th></th></tr></thead><tbody>';
+    bks.forEach(function(bk) {
+      html+='<tr><td>'+esc(bk.date)+'</td><td>'+esc(bk.room)+'</td><td>'+pad(bk.hour)+':00</td><td>'+esc(bk.name)+'</td><td>'+esc(bk.note||'-')+'</td>';
+      html+='<td><button onclick="doCancel(\''+bk.id+'\')" style="padding:4px 10px;background:#fff1f2;color:#e11d48;border:1px solid #fecdd3;border-radius:5px;cursor:pointer;font-size:0.8rem;">Stornieren</button></td></tr>';
+    });
+    html+='</tbody></table>';
+    document.getElementById('admin-bks-table').innerHTML=html;
+  } catch(e) { document.getElementById('admin-bks-table').innerHTML='<p style="color:red">Fehler: '+e.message+'</p>'; }
+}
+
+async function init() {
+  await loadSettings();
+  var today=fmt(new Date()), in14=fmt(addDays(new Date(),14));
+  document.getElementById('filter-from').value=today;
+  document.getElementById('filter-to').value=in14;
+  renderDay();
+  startAutoRefresh();
+}
+init().catch(function(e) {
+  document.getElementById('day-table').innerHTML='<p style="color:red;padding:20px">Init-Fehler: '+e.message+'</p>';
+});
+
+// ── Echtzeit-Sync via SSE ──
+(function connectSSE() {
+  var es = new EventSource('/api/events');
+  es.addEventListener('booking-created', function() { renderDay(); if(activeTab==='week') renderWk(); });
+  es.addEventListener('booking-cancelled', function() { renderDay(); if(activeTab==='week') renderWk(); });
+  es.addEventListener('settings', function(e) { var s=JSON.parse(e.data); ROOMS=s.rooms||ROOMS; var sh=parseInt(s.startHour)||8,eh=parseInt(s.endHour)||17; HOURS=[]; for(var h=sh;h<=eh;h++) HOURS.push(h); renderDay(); });
+  es.onerror = function() { setTimeout(connectSSE, 5000); };
+})();
+</script>
+</body>
+</html>

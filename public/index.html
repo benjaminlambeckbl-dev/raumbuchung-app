@@ -74,6 +74,35 @@ header h1 { font-size: 1.1rem; font-weight: 600; padding: 14px 20px 14px 0; lett
 .admin-filter { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; align-items: flex-end; }
 .admin-filter label { font-size: 0.82rem; font-weight: 600; color: #374151; display: flex; flex-direction: column; gap: 4px; }
 .admin-filter input, .admin-filter select { padding: 7px 10px; border: 1.5px solid #e2e8f0; border-radius: 6px; font-size: 0.85rem; }
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  header { padding: 0 0 0 12px; }
+  header h1 { font-size: 0.95rem; padding: 12px 8px 12px 0; }
+  .tab-btn { padding: 0 12px; font-size: 0.78rem; }
+  .sync-dot { display: none; }
+  .tab-content { padding: 12px; }
+  .nav-bar { gap: 8px; }
+  .nav-btn { padding: 8px 14px; font-size: 0.85rem; min-height: 40px; }
+  .nav-label { font-size: 0.88rem; flex: 1; text-align: center; }
+
+  /* Tabelle scrollbar machen statt quetschen */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; }
+  .booking-table { min-width: 360px; }
+  .booking-table th, .booking-table td.time-col { font-size: 0.75rem; padding: 8px 4px; }
+  .cell-free { padding: 12px 4px; font-size: 0.75rem; min-height: 44px; }
+  .bk-cancel { width: 24px; height: 24px; font-size: 11px; line-height: 24px; }
+
+  /* Modal volle Breite */
+  .modal { width: 100%; max-width: 100%; border-radius: 14px 14px 0 0; position: fixed; bottom: 0; left: 0; padding: 24px 20px; }
+  .modal-bg.open { align-items: flex-end; }
+
+  /* Admin */
+  .admin-filter { flex-direction: column; gap: 8px; }
+  .admin-filter label { width: 100%; }
+  .admin-table th:nth-child(5), .admin-table td:nth-child(5) { display: none; }
+  .time-row { gap: 12px; }
+}
 </style>
 </head>
 <body>
@@ -93,7 +122,7 @@ header h1 { font-size: 1.1rem; font-weight: 600; padding: 14px 20px 14px 0; lett
     <span id="day-label" class="nav-label"></span>
     <button class="nav-btn" onclick="changeDay(1)">&rarr;</button>
   </div>
-  <div id="day-table"></div>
+  <div class="table-wrap"><div id="day-table"></div></div>
 </div>
 
 <div id="tab-week" class="tab-content">
@@ -102,7 +131,7 @@ header h1 { font-size: 1.1rem; font-weight: 600; padding: 14px 20px 14px 0; lett
     <span id="week-label" class="nav-label"></span>
     <button class="nav-btn" onclick="changeWeek(1)">N&auml;chste &rarr;</button>
   </div>
-  <div id="week-table"></div>
+  <div class="table-wrap"><div id="week-table"></div></div>
 </div>
 
 <div id="tab-admin" class="tab-content">

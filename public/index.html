@@ -206,13 +206,19 @@ function kwNum(d) {
 }
 
 async function loadSettings() {
-  try {
-    var r=await fetch(API+'/rb-settings');
-    var s=await r.json();
-    ROOMS=s.rooms||ROOMS;
-    var sh=parseInt(s.startHour)||8, eh=parseInt(s.endHour)||17;
-    HOURS=[]; for(var h=sh;h<=eh;h++) HOURS.push(h);
-  } catch(e) { console.warn('Settings Fehler',e); }
+  for (var attempt=0; attempt<3; attempt++) {
+    try {
+      var r=await fetch(API+'/rb-settings');
+      var s=await r.json();
+      ROOMS=s.rooms||ROOMS;
+      var sh=parseInt(s.startHour)||8, eh=parseInt(s.endHour)||17;
+      HOURS=[]; for(var h=sh;h<=eh;h++) HOURS.push(h);
+      return;
+    } catch(e) {
+      console.warn('Settings Fehler (Versuch '+(attempt+1)+')',e);
+      if(attempt<2) await new Promise(function(res){ setTimeout(res, 2000); });
+    }
+  }
 }
 
 function showTab(t) {

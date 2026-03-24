@@ -6,15 +6,17 @@
 <meta name="theme-color" content="#1e40af">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Raumbuchung">
+<meta name="apple-mobile-web-app-title" content="LERNpraxis Hoferichter">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icon.svg">
-<title>Raumbuchung</title>
+<title>LERNpraxis Hoferichter – Raumbuchung</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #eef2f7; color: #1a2332; }
-header { background: #1e40af; color: white; padding: 0 0 0 20px; display: flex; align-items: stretch; gap: 0; }
-header h1 { font-size: 1.1rem; font-weight: 600; padding: 14px 20px 14px 0; letter-spacing: -0.3px; }
+header { background: #1e40af; color: white; padding: 0 0 0 16px; display: flex; align-items: stretch; gap: 0; }
+.header-brand { display: flex; align-items: center; gap: 10px; padding: 8px 20px 8px 0; }
+.header-brand img { height: 36px; width: auto; object-fit: contain; filter: brightness(0) invert(1); }
+header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.3px; line-height: 1.2; }
 .tabs { display: flex; margin-left: auto; }
 .tab-btn { background: transparent; border: none; color: rgba(255,255,255,0.7); padding: 0 22px; cursor: pointer; font-size: 0.88rem; font-weight: 500; border-bottom: 3px solid transparent; transition: all 0.15s; }
 .tab-btn:hover { color: white; background: rgba(255,255,255,0.08); }
@@ -77,8 +79,10 @@ header h1 { font-size: 1.1rem; font-weight: 600; padding: 14px 20px 14px 0; lett
 
 /* ── Mobile ── */
 @media (max-width: 640px) {
-  header { padding: 0 0 0 12px; }
-  header h1 { font-size: 0.95rem; padding: 12px 8px 12px 0; }
+  header { padding: 0 0 0 10px; }
+  .header-brand { gap: 7px; padding: 6px 10px 6px 0; }
+  .header-brand img { height: 28px; }
+  header h1 { font-size: 0.85rem; }
   .tab-btn { padding: 0 12px; font-size: 0.78rem; }
   .sync-dot { display: none; }
   .tab-content { padding: 12px; }
@@ -107,7 +111,10 @@ header h1 { font-size: 1.1rem; font-weight: 600; padding: 14px 20px 14px 0; lett
 </head>
 <body>
 <header>
-  <h1>Raumbuchung</h1>
+  <div class="header-brand">
+    <img src="/lernpraxis-logo.png" alt="LERNpraxis Hoferichter">
+    <h1>LERNpraxis Hoferichter</h1>
+  </div>
   <div class="tabs">
     <button class="tab-btn active" onclick="showTab('day')">Tagesansicht</button>
     <button class="tab-btn" onclick="showTab('week')">Wochenvorschau</button>

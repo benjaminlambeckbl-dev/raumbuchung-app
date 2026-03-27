@@ -158,7 +158,7 @@ function buildEmailHtml(entry) {
            + `<td style="padding:7px 14px;border:1px solid #cce0e5;color:#333">${val.replace(/\n/g,'<br>')}</td></tr>`;
     }).join('');
   return `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;color:#00364a;max-width:700px;margin:0 auto">
-    <h2 style="background:#00364a;color:#00aaa2;padding:20px 24px;border-radius:8px 8px 0 0;margin:0">Neue Trainer:in-Bewerbung</h2>
+    <h2 style="background:#00364a;color:#00aaa2;padding:20px 24px;border-radius:8px 8px 0 0;margin:0">Neue Bildungstäter:in-Bewerbung</h2>
     <p style="padding:16px 24px;background:#fff;margin:0;border:1px solid #cce0e5;border-top:none">
       Eingegangen am: <strong>${new Date(entry.receivedAt).toLocaleString('de-DE')}</strong>
     </p>
@@ -177,8 +177,8 @@ async function sendTrainerEmail(entry) {
     });
     await transporter.sendMail({
       from: process.env.SMTP_FROM || `"ISH Gruppe Formular" <${process.env.SMTP_USER}>`,
-      to: 'anfrage@ish-gruppe.de',
-      subject: `Neue Trainer-Bewerbung: ${entry.fullName}`,
+      to: 'office@ish-gruppe.de',
+      subject: `Neue Bildungstäter:in-Bewerbung: ${entry.fullName}`,
       html: buildEmailHtml(entry)
     });
     console.log(`[Mail] Bewerbung von ${entry.fullName} versendet`);

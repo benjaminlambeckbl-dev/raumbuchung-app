@@ -2,6 +2,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -121,6 +122,101 @@ app.post('/rb-booking-cancel', (req, res) => {
   save(db);
   broadcast('booking-cancelled', { id });
   res.json({ success: true, deleted });
+});
+
+// ── E-Mail ───────────────────────────────────────────────────────────────────
+
+function buildEmailHtml(entry) {
+  const skip = new Set(['id', 'receivedAt', 'submittedAt', 'privacy']);
+  const labels = {
+    fullName: 'Name', email: 'E-Mail', phone: 'Telefon', city: 'Wohnort',
+    website: 'Website', linkedin: 'LinkedIn/Xing',
+    availability: 'Verfügbarkeit', availNote: 'Verfügbarkeit – Hinweis',
+    regions1: 'Einsatzgebiete primär', regions2: 'Einsatzgebiete sekundär',
+    regions3: 'Einsatzgebiete gelegentlich', targetGroups: 'Zielgruppen',
+    topics: 'Themenfelder', topics5a: '5A Unterrichtsentwicklung',
+    topics5b: '5B Schulentwicklung', topics5c: '5C Führung & Leitung',
+    topics5d: '5D Beratung & Coaching', topics5e: '5E Gesundheit',
+    topics5f: '5F Digitalisierung/KI',
+    schoolWork: 'Im Schulwesen tätig', schoolYears: 'Wie lange',
+    totalDays: 'Gesamtzahl Fortbildungstage',
+    formats: 'Formate', formatsOther: 'Formate – Sonstiges',
+    additionalFormats: 'Zusatzformate', addFormatsSonstiges: 'Zusatzformate – Sonstiges',
+    tools: 'Digitale Tools', languages: 'Sprachen',
+    cert1: 'Zertifizierung 1', cert2: 'Zertifizierung 2', cert3: 'Zertifizierung 3',
+    ref1name: 'Referenz 1 Name', ref1contact: 'Referenz 1 Kontakt',
+    ref2name: 'Referenz 2 Name', ref2contact: 'Referenz 2 Kontakt',
+    misc: 'Sonstiges / Motivation'
+  };
+  const rows = Object.entries(entry)
+    .filter(([k]) => !skip.has(k))
+    .map(([k, v]) => {
+      const val = Array.isArray(v) ? v.join(', ') : String(v || '');
+      if (!val) return '';
+      const label = labels[k] || k;
+      return `<tr><td style="padding:7px 14px;font-weight:600;background:#f0f8f9;border:1px solid #cce0e5;white-space:nowrap;color:#00364a">${label}</td>`
+           + `<td style="padding:7px 14px;border:1px solid #cce0e5;color:#333">${val.replace(/\n/g,'<br>')}</td></tr>`;
+    }).join('');
+  return `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;color:#00364a;max-width:700px;margin:0 auto">
+    <h2 style="background:#00364a;color:#00aaa2;padding:20px 24px;border-radius:8px 8px 0 0;margin:0">Neue Trainer:in-Bewerbung</h2>
+    <p style="padding:16px 24px;background:#fff;margin:0;border:1px solid #cce0e5;border-top:none">
+      Eingegangen am: <strong>${new Date(entry.receivedAt).toLocaleString('de-DE')}</strong>
+    </p>
+    <table style="border-collapse:collapse;width:100%;border:1px solid #cce0e5;border-top:none">${rows}</table>
+    </body></html>`;
+}
+
+async function sendTrainerEmail(entry) {
+  if (!process.env.SMTP_HOST) return;
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT) || 587,
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+    });
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || `"ISH Gruppe Formular" <${process.env.SMTP_USER}>`,
+      to: 'anfrage@ish-gruppe.de',
+      subject: `Neue Trainer-Bewerbung: ${entry.fullName}`,
+      html: buildEmailHtml(entry)
+    });
+    console.log(`[Mail] Bewerbung von ${entry.fullName} versendet`);
+  } catch (err) {
+    console.error('[Mail] Fehler beim Versand:', err.message);
+  }
+}
+
+// ── Trainer:innen-Bewerbungen ────────────────────────────────────────────────
+
+const TRAINERS_FILE = process.env.TRAINERS_FILE || path.join(VOLUME_PATH, 'trainers.json');
+
+function loadTrainers() {
+  try { return JSON.parse(fs.readFileSync(TRAINERS_FILE, 'utf8')); }
+  catch { return []; }
+}
+
+app.post('/api/trainer-apply', (req, res) => {
+  const body = req.body;
+  if (!body || !body.fullName || !body.email) {
+    return res.status(400).json({ error: 'Pflichtfelder fehlen: fullName, email' });
+  }
+
+  const id = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+  const entry = { id, ...body, receivedAt: new Date().toISOString() };
+
+  const trainers = loadTrainers();
+  trainers.push(entry);
+  fs.mkdirSync(path.dirname(TRAINERS_FILE), { recursive: true });
+  fs.writeFileSync(TRAINERS_FILE, JSON.stringify(trainers, null, 2));
+
+  console.log(`[Trainer-Bewerbung] ${entry.fullName} <${entry.email}> (ID: ${id})`);
+  sendTrainerEmail(entry).catch(() => {});
+  res.json({ success: true, id });
+});
+
+app.get('/api/trainer-applications', (req, res) => {
+  res.json(loadTrainers());
 });
 
 // ── Start ────────────────────────────────────────────────────────────────────

@@ -173,7 +173,7 @@ async function sendTrainerEmail(entry) {
     const resend = new Resend(apiKey);
     await resend.emails.send({
       from: 'ISH Gruppe Bewerbungen <onboarding@resend.dev>',
-      to: 'anfrage@ish-gruppe.de',
+      to: 'office@ish-gruppe.de',
       subject: `Neue Bildungstäter:in-Bewerbung: ${entry.fullName}`,
       html: buildEmailHtml(entry)
     });

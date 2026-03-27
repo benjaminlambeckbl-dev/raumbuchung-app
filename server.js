@@ -2,7 +2,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -167,16 +167,12 @@ function buildEmailHtml(entry) {
 }
 
 async function sendTrainerEmail(entry) {
-  if (!process.env.SMTP_HOST) return;
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return;
   try {
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT) || 587,
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-    });
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || `"ISH Gruppe Formular" <${process.env.SMTP_USER}>`,
+    const resend = new Resend(apiKey);
+    await resend.emails.send({
+      from: 'ISH Gruppe Bewerbungen <onboarding@resend.dev>',
       to: 'office@ish-gruppe.de',
       subject: `Neue Bildungstäter:in-Bewerbung: ${entry.fullName}`,
       html: buildEmailHtml(entry)

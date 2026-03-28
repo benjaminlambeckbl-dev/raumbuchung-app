@@ -693,9 +693,9 @@
     data.submittedAt = new Date().toISOString();
 
     try {
-      const res = await fetch('/api/trainer-apply', {
+      const res = await fetch('https://formspree.io/f/mvzvzwgy', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(data)
       });
       if (!res.ok) throw new Error('Server error');
